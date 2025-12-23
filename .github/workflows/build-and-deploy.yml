@@ -1,0 +1,42 @@
+name: Build and Deploy Dist
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 0 * * *'   # 每天 00:15 UTC（北京时间 08:15）
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Load env
+        uses: xom9ikk/dotenv@v2
+        with:
+          path: app/.env.local
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Deploy dist to deploy branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: deploy
